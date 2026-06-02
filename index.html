@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>Pac-Man Ultimate Improved</title>
+
+
+<style>
+
+
+:root{
+--bg1:#071428;
+--bg2:#02050d;
+--card:#0f1729;
+--card2:#121d35;
+--line:rgba(255,255,255,0.08);
+
+
+--yellow:#ffd800;
+--blue:#4da3ff;
+--cyan:#00f0ff;
+--red:#ff4d6d;
+--text:#ffffff;
+--muted:#9fb3d9;
+
+
+--shadow:0 20px 50px rgba(0,0,0,0.45);
+}
+
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+
+body{
+font-family:Inter,Arial,Helvetica,sans-serif;
+overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+color:white;
+
+
+background:
+radial-gradient(circle at top left,#122b55 0%,transparent 35%),
+radial-gradient(circle at bottom right,#09111f 0%,transparent 40%),
+linear-gradient(145deg,var(--bg1),var(--bg2));
+}
+
+
+body::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+background-size:40px 40px;
+pointer-events:none;
+}
+
+
+canvas{
+background:black;
+border:2px solid rgba(255,255,255,0.08);
+border-radius:24px;
+width:min(95vw,720px);
+height:auto;
+image-rendering:pixelated;
+box-shadow:
+0 0 0 4px rgba(255,255,255,0.03),
+0 30px 80px rgba(0,0,0,0.6);
+}
+
+
+.screen{
+position:absolute;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:rgba(2,5,15,0.78);
+backdrop-filter:blur(14px);
+z-index:20;
+gap:18px;
+}
+
+
+.hidden{
+display:none;
+}
+
+
+.panel{
+width:380px;
+padding:38px;
+border-radius:28px;
+
+
+background:
+linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+rgba(255,255,255,0.03)
+);
+
+
+border:1px solid var(--line);
+
+
+box-shadow:var(--shadow);
+
+
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:18px;
+}
+
+
+.logo{
+font-size:64px;
+font-weight:900;
+letter-spacing:3px;
+color:var(--yellow);
+
+
+text-shadow:
+0 0 12px rgba(255,216,0,0.5),
+0 0 30px rgba(255,216,0,0.2);
+}
+
+
+.subtitle{
+color:var(--muted);
+font-size:15px;
+margin-top:-6px;
+margin-bottom:10px;
+}
+
+
+h2{
+font-size:28px;
+font-weight:700;
+}
+
+
+button,
+select{
+width:100%;
+padding:15px 18px;
+border:none;
+outline:none;
+border-radius:16px;
+font-size:16px;
+font-weight:600;
+transition:0.25s ease;
+}
+
+
+button{
+cursor:pointer;
+background:
+linear-gradient(
+135deg,
+var(--yellow),
+#ffb700
+);
+
+
+color:black;
+box-shadow:
+0 10px 25px rgba(255,216,0,0.28);
+}
+
+
+button:hover{
+transform:translateY(-3px);
+box-shadow:
+0 14px 30px rgba(255,216,0,0.35);
+}
+
+
+.secondary{
+background:rgba(255,255,255,0.08);
+color:white;
+box-shadow:none;
+}
+
+
+.secondary:hover{
+background:rgba(255,255,255,0.12);
+}
+
+
+select{
+background:var(--card2);
+color:white;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+
+#ui{
+position:absolute;
+top:18px;
+left:18px;
+z-index:10;
+
+
+display:none;
+
+
+padding:16px 18px;
+border-radius:20px;
+
+
+background:rgba(10,16,30,0.75);
+backdrop-filter:blur(10px);
+
+
+border:1px solid rgba(255,255,255,0.08);
+
+
+line-height:1.9;
+font-size:15px;
+
+
+min-width:200px;
+
+
+box-shadow:var(--shadow);
+}
+
+
+#ui div{
+display:flex;
+justify-content:space-between;
+gap:16px;
+color:var(--muted);
+}
+
+
+#ui span{
+color:white;
+font-weight:700;
+}
+
+
+.end-title{
+font-size:52px;
+font-weight:900;
+text-align:center;
+}
+
+
+.small-note{
+font-size:13px;
+color:var(--muted);
+opacity:0.8;
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<!-- MENU -->
+<div id="menu" class="screen">
+
+
+<div class="panel">
+
+
+<div class="logo">PAC-MAN</div>
+
+
+<div class="subtitle">
+Ultimate Arcade Edition
+</div>
+
+
+<button onclick="openSettings()">
+Start Game
+</button>
+
+
+<div class="small-note">
+Arrow Keys • ESC to Pause
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<!-- SETTINGS -->
+<div id="settings" class="screen hidden">
+
+
+<div class="panel">
+
+
+<h2>Game Settings</h2>
+
+
+<select id="difficulty">
+
+
+<option value="12">Easy Mode</option>
+<option value="9" selected>Normal Mode</option>
+<option value="6">Hard Mode</option>
+<option value="3">Extreme Mode</option>
+<option value="1.5">Impossible Mode</option>
+
+
+</select>
+
+
+<button onclick="startGame()">
+Play Now
+</button>
+
+
+<button class="secondary" onclick="backMenu()">
+Back
+</button>
+
+
+</div>
+
+
+</div>
+
+
+<!-- END -->
+<div id="end" class="screen hidden">
+
+
+<div class="panel">
+
+
+<h1 id="endText" class="end-title"></h1>
+
+
+<button onclick="restartGame()">
+Restart Game
+</button>
+
+
+</div>
+
+
+</div>
+
+
+<!-- UI -->
+<div id="ui">
+
+
+<div>Score: <span id="score">0</span></div>
+
+
+<div>Lives: <span id="lives">3</span></div>
+
+
+<div>Dots Left: <span id="dots">0</span></div>
+
+
+<div>Level: <span id="level">1</span></div>
+
+
+<div>State: <span id="state">PLAYING</span></div>
+
+
+</div>
+
+
+<canvas id="game"></canvas>
+
+
+<script>
+
+
+// =====================================================
+// CONSTANTS
+// =====================================================
+
+
+const TILE = 24;
+
+
+const WALL = 1;
+const DOT = 2;
+const EMPTY = 0;
+const POWER = 3;
+const FRUIT = 4;
+
+
+const PLAYER_RADIUS = 10;
+const GHOST_RADIUS = 10;
+
+
+const GAME_SPEED = 100;
+
+
+const POWER_DURATION = 7000;
+
+
+// =====================================================
+// DOM
+// =====================================================
+
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const dotsEl = document.getElementById("dots");
+const levelEl = document.getElementById("level");
+const stateEl = document.getElementById("state");
+
+
+const menu = document.getElementById("menu");
+const settings = document.getElementById("settings");
+const endScreen = document.getElementById("end");
+const endText = document.getElementById("endText");
+
+
+// =====================================================
+// MAP
+// =====================================================
+
+
+const originalMap = [
+
+
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+
+
+[1,2,2,2,2,2,1,2,2,2,2,2,1,2,2,2,1,2,2,2,2,2,1,2,2,2,2,2,3,1],
+
+
+[1,2,1,2,1,2,1,2,1,1,1,2,1,2,1,2,1,2,1,1,1,2,1,2,1,2,1,1,2,1],
+
+
+[1,2,2,2,1,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,1],
+
+
+[1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,0,1,1,1,1,1,2,1,2,1,2,1,1,1,1],
+
+
+[1,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,1],
+
+
+[1,2,1,1,1,2,1,2,1,1,1,2,1,0,1,0,1,1,1,1,1,2,1,1,1,2,1,1,2,1],
+
+
+[1,2,2,2,1,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,1],
+
+
+[1,1,1,2,1,1,1,2,1,2,1,1,1,2,1,2,1,1,1,2,1,1,1,1,1,1,1,2,1,1],
+
+
+[1,0,0,2,2,2,2,2,2,2,2,2,1,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,0,1],
+
+
+[1,2,1,1,2,1,2,1,1,2,1,2,1,2,1,2,2,2,1,1,2,1,1,1,1,1,2,1,1,1],
+
+
+[1,2,2,2,2,2,2,2,1,2,1,2,1,2,1,2,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+
+
+[1,2,1,2,1,1,1,2,1,2,2,2,1,0,1,1,1,2,1,1,1,2,1,1,1,1,1,1,2,1],
+
+
+[1,2,2,2,2,2,1,2,2,2,1,2,2,0,2,0,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+
+
+[1,2,1,1,1,2,1,2,1,2,1,1,1,0,1,0,1,1,1,2,1,1,1,1,1,2,1,2,1,1],
+
+
+[1,2,2,2,1,2,2,2,1,2,2,2,1,2,1,2,1,2,2,2,1,2,2,2,2,2,2,2,2,1],
+
+
+[1,2,1,2,1,2,1,2,1,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,1],
+
+
+[1,2,1,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,1],
+
+
+[1,2,1,2,1,2,1,1,1,2,1,1,1,2,1,2,1,1,1,1,1,2,1,1,1,2,1,1,2,1],
+
+
+[1,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,1],
+
+
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+
+];
+
+
+// =====================================================
+// CANVAS SIZE
+// =====================================================
+
+
+canvas.width = originalMap[0].length * TILE;
+canvas.height = originalMap.length * TILE;
+
+
+// =====================================================
+// STATES
+// =====================================================
+
+
+const STATE = {
+MENU:"MENU",
+PLAYING:"PLAYING",
+PAUSED:"PAUSED",
+WIN:"WIN",
+GAMEOVER:"GAMEOVER"
+};
+
+
+// =====================================================
+// GAME
+// =====================================================
+
+
+const game = {
+
+
+map:[],
+
+
+score:0,
+lives:3,
+dots:0,
+level:1,
+
+
+state:STATE.MENU,
+
+
+ghostSpeed:14,
+
+
+powerMode:false,
+powerEnd:0,
+
+
+lastTick:0,
+
+
+player:{
+x:1,
+y:1,
+dir:{x:0,y:0},
+next:{x:0,y:0}
+},
+
+
+ghosts:[]
+
+
+};
+
+
+// =====================================================
+// MENU
+// =====================================================
+
+
+function openSettings(){
+
+
+menu.classList.add("hidden");
+settings.classList.remove("hidden");
+
+
+}
+
+
+function backMenu(){
+
+
+settings.classList.add("hidden");
+menu.classList.remove("hidden");
+
+
+}
+
+
+// =====================================================
+// START
+// =====================================================
+
+
+function startGame(){
+
+
+settings.classList.add("hidden");
+
+
+document.getElementById("ui").style.display="block";
+
+
+game.ghostSpeed =
+parseInt(
+document.getElementById("difficulty").value
+);
+
+
+init();
+
+
+game.state = STATE.PLAYING;
+
+
+requestAnimationFrame(loop);
+
+
+}
+
+
+// =====================================================
+// INIT
+// =====================================================
+
+
+function init(){
+
+
+game.map =
+originalMap.map(row => [...row]);
+
+
+game.score = 0;
+game.dots = 0;
+game.lives = 3;
+
+
+game.player = {
+x:1,
+y:1,
+dir:{x:0,y:0},
+next:{x:0,y:0}
+};
+
+
+game.ghosts = [
+
+
+{
+x:28,
+y:1,
+color:"red",
+moveTick:0
+},
+
+
+{
+x:28,
+y:19,
+color:"pink",
+moveTick:0
+},
+
+
+{
+x:15,
+y:10,
+color:"orange",
+moveTick:0
+}
+
+
+];
+
+
+for(let y=0;y<game.map.length;y++){
+for(let x=0;x<game.map[y].length;x++){
+
+
+if(
+game.map[y][x]===DOT ||
+game.map[y][x]===POWER
+){
+game.dots++;
+}
+
+
+}
+}
+
+
+updateUI();
+
+
+}
+
+
+// =====================================================
+// UI
+// =====================================================
+
+
+function updateUI(){
+
+
+scoreEl.innerText = game.score;
+livesEl.innerText = game.lives;
+dotsEl.innerText = game.dots;
+levelEl.innerText = game.level;
+stateEl.innerText = game.state;
+
+
+}
+
+
+// =====================================================
+// INPUT
+// =====================================================
+
+
+window.addEventListener("keydown",(e)=>{
+
+
+if([
+"ArrowUp",
+"ArrowDown",
+"ArrowLeft",
+"ArrowRight",
+"Escape"
+].includes(e.key)){
+e.preventDefault();
+}
+
+
+if(e.key==="Escape"){
+
+
+if(game.state===STATE.PLAYING){
+game.state = STATE.PAUSED;
+}
+else if(game.state===STATE.PAUSED){
+game.state = STATE.PLAYING;
+}
+
+
+updateUI();
+return;
+
+
+}
+
+
+if(game.state!==STATE.PLAYING) return;
+
+
+switch(e.key){
+
+
+case "ArrowUp":
+game.player.next={x:0,y:-1};
+break;
+
+
+case "ArrowDown":
+game.player.next={x:0,y:1};
+break;
+
+
+case "ArrowLeft":
+game.player.next={x:-1,y:0};
+break;
+
+
+case "ArrowRight":
+game.player.next={x:1,y:0};
+break;
+
+
+}
+
+
+});
+
+
+// =====================================================
+// WALL
+// =====================================================
+
+
+function wall(x,y){
+
+
+if(y<0 || y>=game.map.length){
+return true;
+}
+
+
+return game.map[y][x]===WALL;
+
+
+}
+
+
+// =====================================================
+// PLAYER
+// =====================================================
+
+
+function movePlayer(){
+
+
+const p = game.player;
+
+
+const tryX = p.x + p.next.x;
+const tryY = p.y + p.next.y;
+
+
+if(!wall(tryX,tryY)){
+p.dir = {...p.next};
+}
+
+
+const nx = p.x + p.dir.x;
+const ny = p.y + p.dir.y;
+
+
+if(!wall(nx,ny)){
+p.x = nx;
+p.y = ny;
+}
+
+
+if(p.x < 0){
+p.x = game.map[0].length - 1;
+}
+
+
+if(p.x >= game.map[0].length){
+p.x = 0;
+}
+
+
+pickup();
+
+
+}
+
+
+// =====================================================
+// PICKUPS
+// =====================================================
+
+
+function pickup(){
+
+
+const tile =
+game.map[game.player.y][game.player.x];
+
+
+if(tile===DOT){
+
+
+game.map[game.player.y][game.player.x]=EMPTY;
+
+
+game.score += 10;
+
+
+game.dots--;
+
+
+}
+
+
+if(tile===POWER){
+
+
+game.map[game.player.y][game.player.x]=EMPTY;
+
+
+game.score += 50;
+
+
+game.dots--;
+
+
+game.powerMode = true;
+
+
+game.powerEnd =
+Date.now() + POWER_DURATION;
+
+
+}
+
+
+if(tile===FRUIT){
+
+
+game.map[game.player.y][game.player.x]=EMPTY;
+
+
+game.score += 200;
+
+
+}
+
+
+updateUI();
+
+
+}
+
+
+// =====================================================
+// GHOSTS
+// =====================================================
+
+
+function moveGhosts(){
+
+
+if(
+game.powerMode &&
+Date.now() > game.powerEnd
+){
+game.powerMode = false;
+}
+
+
+for(const ghost of game.ghosts){
+
+
+ghost.moveTick++;
+
+
+if(ghost.moveTick % game.ghostSpeed !== 0){
+continue;
+}
+
+
+if(Math.random()<0.20){
+
+
+randomMove(ghost);
+
+
+}else{
+
+
+pathfind(ghost);
+
+
+}
+
+
+if(ghost.x < 0){
+ghost.x = game.map[0].length - 1;
+}
+
+
+if(ghost.x >= game.map[0].length){
+ghost.x = 0;
+}
+
+
+}
+
+
+}
+
+
+// =====================================================
+// RANDOM MOVE
+// =====================================================
+
+
+function randomMove(g){
+
+
+const dirs = [
+
+
+{x:1,y:0},
+{x:-1,y:0},
+{x:0,y:1},
+{x:0,y:-1}
+
+
+];
+
+
+const valid=[];
+
+
+for(const d of dirs){
+
+
+const nx = g.x+d.x;
+const ny = g.y+d.y;
+
+
+if(!wall(nx,ny)){
+valid.push(d);
+}
+
+
+}
+
+
+if(valid.length===0) return;
+
+
+const move =
+valid[Math.floor(Math.random()*valid.length)];
+
+
+g.x += move.x;
+g.y += move.y;
+
+
+}
+
+
+// =====================================================
+// PATHFINDING
+// =====================================================
+
+
+function pathfind(g){
+
+
+const queue=[];
+let head=0;
+
+
+const visited=new Set();
+
+
+const parent=new Map();
+
+
+function key(x,y){
+return `${x},${y}`;
+}
+
+
+queue.push({
+x:g.x,
+y:g.y
+});
+
+
+visited.add(key(g.x,g.y));
+
+
+let found=null;
+
+
+while(head<queue.length){
+
+
+const cur=queue[head++];
+
+
+if(
+cur.x===game.player.x &&
+cur.y===game.player.y
+){
+found=cur;
+break;
+}
+
+
+const dirs=[
+
+
+{x:1,y:0},
+{x:-1,y:0},
+{x:0,y:1},
+{x:0,y:-1}
+
+
+];
+
+
+for(const d of dirs){
+
+
+const nx=cur.x+d.x;
+const ny=cur.y+d.y;
+
+
+if(wall(nx,ny)) continue;
+
+
+const k=key(nx,ny);
+
+
+if(visited.has(k)) continue;
+
+
+visited.add(k);
+
+
+parent.set(k,cur);
+
+
+queue.push({
+x:nx,
+y:ny
+});
+
+
+}
+
+
+}
+
+
+if(!found) return;
+
+
+let step=found;
+
+
+while(true){
+
+
+const p =
+parent.get(key(step.x,step.y));
+
+
+if(
+!p ||
+(
+p.x===g.x &&
+p.y===g.y
+)
+){
+break;
+}
+
+
+step=p;
+
+
+}
+
+
+g.x=step.x;
+g.y=step.y;
+
+
+}
+
+
+// =====================================================
+// COLLISIONS
+// =====================================================
+
+
+function collisions(){
+
+
+for(const g of game.ghosts){
+
+
+if(
+g.x===game.player.x &&
+g.y===game.player.y
+){
+
+
+if(game.powerMode){
+
+
+game.score += 200;
+
+
+g.x = 15;
+g.y = 10;
+
+
+}else{
+
+
+game.lives--;
+
+
+if(game.lives<=0){
+
+
+game.state=STATE.GAMEOVER;
+
+
+showEnd("💀 GAME OVER");
+
+
+return;
+
+
+}
+const spawnPoints = [
+    {x:1, y:1},
+    {x:28, y:1},
+    {x:1, y:19},
+    {x:28, y:19},
+    {x:15, y:10},
+
+    {x:3, y:3},
+    {x:7, y:5},
+    {x:12, y:7},
+    {x:18, y:5},
+    {x:24, y:3},
+
+    {x:5, y:9},
+    {x:10, y:11},
+    {x:20, y:11},
+    {x:25, y:9},
+
+    {x:3, y:13},
+    {x:8, y:15},
+    {x:15, y:16},
+    {x:22, y:15},
+    {x:27, y:13},
+
+    {x:4, y:18},
+    {x:10, y:18},
+    {x:20, y:18},
+    {x:26, y:18},
+
+    {x:6, y:7},
+    {x:14, y:3},
+    {x:16, y:17},
+    {x:23, y:7}
+];
+function respawnPlayer(){
+
+    const spawn =
+        spawnPoints[
+            Math.floor(Math.random()*spawnPoints.length)
+        ];
+
+    game.player.x = spawn.x;
+    game.player.y = spawn.y;
+
+    game.player.dir = {x:0,y:0};
+    game.player.next = {x:0,y:0};
+}
+
+respawnPlayer();
+
+
+}
+
+
+}
+
+
+}
+
+
+if(game.dots<=0){
+
+
+game.state=STATE.WIN;
+
+
+showEnd("🎉 YOU WIN!");
+
+
+}
+
+
+updateUI();
+
+
+}
+
+
+// =====================================================
+// END
+// =====================================================
+
+
+function showEnd(text){
+
+
+endText.innerText=text;
+
+
+endScreen.classList.remove("hidden");
+
+
+document.getElementById("ui")
+.style.display="none";
+
+
+}
+
+
+// =====================================================
+// RESTART
+// =====================================================
+
+
+function restartGame(){
+
+
+endScreen.classList.add("hidden");
+
+
+document.getElementById("ui")
+.style.display="block";
+
+
+init();
+
+
+game.state=STATE.PLAYING;
+
+
+updateUI();
+
+
+requestAnimationFrame(loop);
+
+
+}
+
+
+// =====================================================
+// UPDATE
+// =====================================================
+
+
+function update(){
+
+
+if(game.state!==STATE.PLAYING) return;
+
+
+movePlayer();
+
+
+moveGhosts();
+
+
+collisions();
+
+
+}
+
+
+// =====================================================
+// DRAW MAP
+// =====================================================
+
+
+function drawMap(){
+
+
+for(let y=0;y<game.map.length;y++){
+for(let x=0;x<game.map[y].length;x++){
+
+
+const tile = game.map[y][x];
+
+
+switch(tile){
+
+
+case WALL:
+
+
+ctx.fillStyle="#1e3cff";
+
+
+ctx.fillRect(
+x*TILE,
+y*TILE,
+TILE,
+TILE
+);
+
+
+break;
+
+
+case DOT:
+
+
+ctx.fillStyle="white";
+
+
+ctx.beginPath();
+
+
+ctx.arc(
+x*TILE+TILE/2,
+y*TILE+TILE/2,
+3,
+0,
+Math.PI*2
+);
+
+
+ctx.fill();
+
+
+break;
+
+
+case POWER:
+
+
+ctx.fillStyle="cyan";
+
+
+ctx.beginPath();
+
+
+ctx.arc(
+x*TILE+TILE/2,
+y*TILE+TILE/2,
+7,
+0,
+Math.PI*2
+);
+
+
+ctx.fill();
+
+
+break;
+
+
+case FRUIT:
+
+
+ctx.fillStyle="lime";
+
+
+ctx.beginPath();
+
+
+ctx.arc(
+x*TILE+TILE/2,
+y*TILE+TILE/2,
+6,
+0,
+Math.PI*2
+);
+
+
+ctx.fill();
+
+
+break;
+
+
+}
+
+
+}
+}
+
+
+}
+
+
+// =====================================================
+// PLAYER DRAW
+// =====================================================
+
+
+function drawPlayer(){
+
+
+const p=game.player;
+
+
+const px=p.x*TILE+TILE/2;
+const py=p.y*TILE+TILE/2;
+
+
+const mouth =
+Math.abs(
+Math.sin(Date.now()*0.02)
+)*0.6;
+
+
+let angle=0;
+
+
+if(p.dir.x===1) angle=0;
+if(p.dir.x===-1) angle=Math.PI;
+if(p.dir.y===1) angle=Math.PI/2;
+if(p.dir.y===-1) angle=-Math.PI/2;
+
+
+ctx.save();
+
+
+ctx.translate(px,py);
+
+
+ctx.rotate(angle);
+
+
+ctx.fillStyle="yellow";
+
+
+ctx.beginPath();
+
+
+ctx.moveTo(0,0);
+
+
+ctx.arc(
+0,
+0,
+PLAYER_RADIUS,
+mouth,
+Math.PI*2-mouth
+);
+
+
+ctx.fill();
+
+
+ctx.restore();
+
+
+}
+
+
+// =====================================================
+// DRAW GHOSTS
+// =====================================================
+
+
+function drawGhosts(){
+
+
+for(const g of game.ghosts){
+
+
+ctx.fillStyle =
+game.powerMode
+? "#555"
+: g.color;
+
+
+ctx.beginPath();
+
+
+ctx.arc(
+g.x*TILE+TILE/2,
+g.y*TILE+TILE/2,
+GHOST_RADIUS,
+0,
+Math.PI*2
+);
+
+
+ctx.fill();
+
+
+ctx.fillStyle="white";
+
+
+ctx.beginPath();
+
+
+ctx.arc(
+g.x*TILE+8,
+g.y*TILE+10,
+2,
+0,
+Math.PI*2
+);
+
+
+ctx.arc(
+g.x*TILE+16,
+g.y*TILE+10,
+2,
+0,
+Math.PI*2
+);
+
+
+ctx.fill();
+
+
+}
+
+
+}
+
+
+// =====================================================
+// DRAW
+// =====================================================
+
+
+function draw(){
+
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+
+drawMap();
+
+
+drawPlayer();
+
+
+drawGhosts();
+
+
+if(game.state===STATE.PAUSED){
+
+
+ctx.fillStyle="rgba(0,0,0,0.7)";
+
+
+ctx.fillRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+
+ctx.fillStyle="white";
+
+
+ctx.font="48px Arial";
+
+
+ctx.textAlign="center";
+
+
+ctx.fillText(
+"PAUSED",
+canvas.width/2,
+canvas.height/2
+);
+
+
+}
+
+
+}
+
+
+// =====================================================
+// LOOP
+// =====================================================
+
+
+function loop(timestamp){
+
+
+if(timestamp-game.lastTick>GAME_SPEED){
+
+
+game.lastTick=timestamp;
+
+
+update();
+
+
+draw();
+
+
+}
+
+
+if(
+game.state!==STATE.GAMEOVER &&
+game.state!==STATE.WIN
+){
+requestAnimationFrame(loop);
+}
+
+
+}
+
+
+
+
+</script>
+
+
+</body>
+</html>
+
